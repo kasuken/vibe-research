@@ -1,0 +1,179 @@
+﻿name: Vibe Research
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Research topic'
+        required: true
+        type: string
+      depth:
+        description: 'Research depth'
+        required: false
+        default: 'Standard Research'
+        type: choice
+        options:
+          - Quick Overview
+          - Standard Research
+          - Deep Dive
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    # Only run if triggered manually OR if the issue has the 'research' label
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'research')
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore VibeResearch.CLI/VibeResearch.CLI.csproj
+
+      - name: Build
+        run: dotnet build VibeResearch.CLI/VibeResearch.CLI.csproj --configuration Release --no-restore
+
+      - name: Create output directories
+        run: |
+          mkdir -p docs
+          mkdir -p html
+
+      - name: Set research parameters from issue
+        if: github.event_name == 'issues'
+        run: |
+          echo "VIBE_TOPIC=${{ github.event.issue.title }}" >> $GITHUB_ENV
+          # Extract depth from issue body if specified, otherwise default to Standard Research
+          BODY="${{ github.event.issue.body }}"
+          if echo "$BODY" | grep -qi "deep dive"; then
+            echo "VIBE_DEPTH=Deep Dive" >> $GITHUB_ENV
+          elif echo "$BODY" | grep -qi "quick overview"; then
+            echo "VIBE_DEPTH=Quick Overview" >> $GITHUB_ENV
+          else
+            echo "VIBE_DEPTH=Standard Research" >> $GITHUB_ENV
+          fi
+          echo "ISSUE_NUMBER=${{ github.event.issue.number }}" >> $GITHUB_ENV
+
+      - name: Set research parameters from workflow dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "VIBE_TOPIC=${{ inputs.topic }}" >> $GITHUB_ENV
+          echo "VIBE_DEPTH=${{ inputs.depth }}" >> $GITHUB_ENV
+          echo "ISSUE_NUMBER=manual" >> $GITHUB_ENV
+
+      - name: Add processing comment to issue
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '🔬 **Vibe Research** is processing your request...\n\n- **Topic:** ${{ github.event.issue.title }}\n- **Depth:** ' + process.env.VIBE_DEPTH + '\n\nThis may take a few minutes.'
+            })
+
+      - name: Run Vibe Research
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VIBE_OUTPUT_DIR: ${{ github.workspace }}/research-output
+        run: dotnet run --project VibeResearch.CLI/VibeResearch.CLI.csproj --configuration Release --no-build
+
+      - name: Move output files to correct folders
+        run: |
+          # Move markdown files to docs/
+          find research-output -name "*.md" -exec mv {} docs/ \;
+          # Move HTML files to html/
+          find research-output -name "*.html" -exec mv {} html/ \;
+          # List the results
+          echo "=== Markdown files (docs/) ==="
+          ls -la docs/
+          echo "=== HTML files (html/) ==="
+          ls -la html/
+
+      - name: Commit and push results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/ html/
+          git commit -m "📚 Research: ${{ env.VIBE_TOPIC }} (#${{ env.ISSUE_NUMBER }})" || echo "No changes to commit"
+          git push
+
+      - name: Get generated file names
+        id: files
+        run: |
+          MD_FILE=$(ls -1 docs/*.md 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+          HTML_FILE=$(ls -1 html/*.html 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+          echo "md_file=$MD_FILE" >> $GITHUB_OUTPUT
+          echo "html_file=$HTML_FILE" >> $GITHUB_OUTPUT
+
+      - name: Comment results on issue
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const mdFile = '${{ steps.files.outputs.md_file }}';
+            const htmlFile = '${{ steps.files.outputs.html_file }}';
+            const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}`;
+            
+            let body = '✅ **Research Complete!**\n\n';
+            body += '### 📄 Generated Files\n\n';
+            
+            if (mdFile) {
+              body += `- **Markdown:** [docs/${mdFile}](${repoUrl}/blob/main/docs/${mdFile})\n`;
+            }
+            if (htmlFile) {
+              body += `- **HTML:** [html/${htmlFile}](${repoUrl}/blob/main/html/${htmlFile})\n`;
+            }
+            
+            body += '\n---\n_Generated by Vibe Research_';
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      - name: Close issue with completion label
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Add 'completed' label
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['research-complete']
+            });
+            
+            // Close the issue
+            github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
+
+      - name: Upload research artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vibe-research-${{ github.run_number }}
+          path: |
+            docs/**
+            html/**
+          retention-days: 30
+
+

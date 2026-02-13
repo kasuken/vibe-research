@@ -3,6 +3,11 @@ using Microsoft.Extensions.Configuration;
 using OpenAI.Responses;
 using Spectre.Console;
 
+// Detect if running in CI/non-interactive mode
+var isCI = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")) ||
+           !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS")) ||
+           !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("VIBE_TOPIC"));
+
 // Display application header
 AnsiConsole.Write(
     new FigletText("Vibe Research")
@@ -12,39 +17,64 @@ AnsiConsole.Write(
 AnsiConsole.MarkupLine("[grey]Deep Research powered by OpenAI Reasoning[/]");
 AnsiConsole.WriteLine();
 
-// Load configuration from appsettings.json (if present)
+// Load configuration from appsettings.json (if present) and environment variables
 var config = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
     .AddEnvironmentVariables()
     .Build();
 
-// Get OpenAI API key
-var apiKey = config["OpenAI:ApiKey"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+// Get OpenAI API key (env var takes precedence in CI)
+var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") 
+             ?? config["OpenAI:ApiKey"];
+
 if (string.IsNullOrEmpty(apiKey))
 {
+    if (isCI)
+    {
+        AnsiConsole.MarkupLine("[red]Error: OPENAI_API_KEY environment variable is required in CI mode.[/]");
+        Environment.Exit(1);
+    }
+    
     apiKey = AnsiConsole.Prompt(
         new TextPrompt<string>("Enter your [green]OpenAI API Key[/]:")
             .PromptStyle("yellow")
             .Secret());
 }
 
-// Get research topic from user
-var researchTopic = AnsiConsole.Prompt(
-    new TextPrompt<string>("Enter your [cyan]research topic[/]:")
-        .PromptStyle("green")
-        .Validate(topic =>
-            string.IsNullOrWhiteSpace(topic)
-                ? ValidationResult.Error("[red]Please enter a valid topic[/]")
-                : ValidationResult.Success()));
+// Get research topic
+var researchTopic = Environment.GetEnvironmentVariable("VIBE_TOPIC");
 
+if (string.IsNullOrEmpty(researchTopic))
+{
+    if (isCI)
+    {
+        AnsiConsole.MarkupLine("[red]Error: VIBE_TOPIC environment variable is required in CI mode.[/]");
+        Environment.Exit(1);
+    }
+    
+    researchTopic = AnsiConsole.Prompt(
+        new TextPrompt<string>("Enter your [cyan]research topic[/]:")
+            .PromptStyle("green")
+            .Validate(topic =>
+                string.IsNullOrWhiteSpace(topic)
+                    ? ValidationResult.Error("[red]Please enter a valid topic[/]")
+                    : ValidationResult.Success()));
+}
+
+AnsiConsole.MarkupLine($"[cyan]Research topic:[/] {researchTopic}");
 AnsiConsole.WriteLine();
 
-// Configure research depth (maps to reasoning effort)
-var researchDepth = AnsiConsole.Prompt(
-    new SelectionPrompt<string>()
-        .Title("Select [cyan]research depth[/]:")
-        .AddChoices("Quick Overview", "Standard Research", "Deep Dive"));
+// Get research depth
+var researchDepth = Environment.GetEnvironmentVariable("VIBE_DEPTH") ?? "Standard Research";
+
+if (!isCI)
+{
+    researchDepth = AnsiConsole.Prompt(
+        new SelectionPrompt<string>()
+            .Title("Select [cyan]research depth[/]:")
+            .AddChoices("Quick Overview", "Standard Research", "Deep Dive"));
+}
 
 var (maxIterations, reasoningEffort) = researchDepth switch
 {
@@ -54,7 +84,17 @@ var (maxIterations, reasoningEffort) = researchDepth switch
     _ => (3, ResponseReasoningEffortLevel.Medium)
 };
 
+AnsiConsole.MarkupLine($"[cyan]Research depth:[/] {researchDepth} ({maxIterations} iterations)");
 AnsiConsole.WriteLine();
+
+// Get output directory (default to current directory)
+var outputDir = Environment.GetEnvironmentVariable("VIBE_OUTPUT_DIR") ?? Environment.CurrentDirectory;
+
+// Ensure output directory exists
+if (!Directory.Exists(outputDir))
+{
+    Directory.CreateDirectory(outputDir);
+}
 
 // Initialize OpenAI Responses client with reasoning model
 var client = new ResponsesClient(
@@ -221,13 +261,13 @@ await AnsiConsole.Status()
 // Save to markdown file
 var sanitizedTopic = string.Join("_", researchTopic.Split(Path.GetInvalidFileNameChars()));
 var fileName = $"research_{sanitizedTopic}_{DateTime.Now:yyyyMMdd_HHmmss}.md";
-var outputPath = Path.Combine(Environment.CurrentDirectory, fileName);
+var outputPath = Path.Combine(outputDir, fileName);
 
 await File.WriteAllTextAsync(outputPath, researchResults.ToString());
 
 // Generate HTML version
 var htmlFileName = $"research_{sanitizedTopic}_{DateTime.Now:yyyyMMdd_HHmmss}.html";
-var htmlOutputPath = Path.Combine(Environment.CurrentDirectory, htmlFileName);
+var htmlOutputPath = Path.Combine(outputDir, htmlFileName);
 
 await AnsiConsole.Status()
     .Spinner(Spinner.Known.Dots)

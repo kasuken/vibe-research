@@ -3,3 +3,12 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Secrets - DO NOT commit appsettings.json with API keys
+appsettings.json
