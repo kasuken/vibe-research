@@ -258,15 +258,39 @@ await AnsiConsole.Status()
         }
     });
 
-// Save to markdown file
-var sanitizedTopic = string.Join("_", researchTopic.Split(Path.GetInvalidFileNameChars()));
-var fileName = $"research_{sanitizedTopic}_{DateTime.Now:yyyyMMdd_HHmmss}.md";
+// Generate file names
+var datePrefix = DateTime.Now.ToString("yyyy-MM-dd");
+var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+var sanitizedTopic = string.Join("_", researchTopic.Split(Path.GetInvalidFileNameChars()))
+    .Replace(" ", "-")
+    .ToLowerInvariant();
+
+// Truncate if too long
+if (sanitizedTopic.Length > 50)
+{
+    sanitizedTopic = sanitizedTopic[..50];
+}
+
+// Create Jekyll front matter for the markdown
+var jekyllContent = new StringBuilder();
+jekyllContent.AppendLine("---");
+jekyllContent.AppendLine($"title: \"{researchTopic.Replace("\"", "\\\"")}\"");
+jekyllContent.AppendLine($"date: {DateTime.Now:yyyy-MM-dd HH:mm:ss} +0000");
+jekyllContent.AppendLine($"depth: \"{researchDepth}\"");
+jekyllContent.AppendLine($"reading_time: {Math.Max(5, researchResults.Length / 1500)}");
+jekyllContent.AppendLine($"excerpt: \"AI-powered deep research on {researchTopic}. Generated using {researchDepth} with {maxIterations} research iterations.\"");
+jekyllContent.AppendLine("---");
+jekyllContent.AppendLine();
+jekyllContent.Append(researchResults);
+
+// Save to markdown file with Jekyll naming convention
+var fileName = $"{datePrefix}-{sanitizedTopic}.md";
 var outputPath = Path.Combine(outputDir, fileName);
 
-await File.WriteAllTextAsync(outputPath, researchResults.ToString());
+await File.WriteAllTextAsync(outputPath, jekyllContent.ToString());
 
 // Generate HTML version
-var htmlFileName = $"research_{sanitizedTopic}_{DateTime.Now:yyyyMMdd_HHmmss}.html";
+var htmlFileName = $"research_{sanitizedTopic}_{timestamp}.html";
 var htmlOutputPath = Path.Combine(outputDir, htmlFileName);
 
 await AnsiConsole.Status()

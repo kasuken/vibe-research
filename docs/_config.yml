@@ -1,0 +1,46 @@
+﻿title: Vibe Research
+description: AI-Powered Deep Research Blog
+baseurl: ""
+url: ""
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Theme settings (minimal)
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Collections for research posts
+collections:
+  researches:
+    output: true
+    permalink: /research/:slug/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "researches"
+    values:
+      layout: "research"
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+
+# Excerpt settings
+excerpt_separator: "---"
+
+# Exclude from build
+exclude:
+  - README.md
+  - HOW_TO_REQUEST_RESEARCH.md
+  - EXAMPLES.md
+  - QUICK_REFERENCE.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+
+

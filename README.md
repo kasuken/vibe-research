@@ -1,16 +1,22 @@
 ﻿# Vibe Research
 
-Deep Research CLI powered by OpenAI Reasoning. Conducts iterative research on any topic and generates comprehensive markdown and HTML reports.
+Deep Research CLI powered by OpenAI Reasoning. Conducts iterative research on any topic and generates comprehensive markdown and HTML reports, published automatically to GitHub Pages.
+
+## 🌐 Live Site
+
+**[View Research Blog →](https://your-org.github.io/VibeResearch)**
+
+All research is automatically published to a beautiful, minimal blog hosted on GitHub Pages.
 
 ## Features
 
 - 🔬 **Deep Research**: Iterative research with multiple phases for comprehensive coverage
 - 🧠 **AI Reasoning**: Uses OpenAI's reasoning models (GPT-5.1) with configurable effort levels
-- 📄 **Markdown Output**: Clean, well-structured markdown reports saved to `docs/`
-- 🌐 **HTML Reports**: Professional, standalone HTML pages saved to `html/`
+- 📄 **Markdown Output**: Clean, well-structured markdown reports
+- 🌐 **GitHub Pages Blog**: Beautiful minimal blog with research previews
 - 🎨 **Beautiful CLI**: Spectre.Console powered interface with progress indicators
 - 🤖 **GitHub Actions**: Trigger research via Issues or workflow dispatch
-- 📝 **Auto-commit**: Results are automatically committed to the repository
+- 📝 **Auto-publish**: Results automatically published to your research blog
 
 ## Quick Start
 
@@ -24,13 +30,13 @@ The easiest way to request research is using our issue template:
    - **Research Depth**: Quick Overview, Standard Research, or Deep Dive
    - **Context** (optional): Additional guidance
 3. **Submit** and wait for the automated research to complete
-4. **Get results** via comments with links to markdown and HTML reports
+4. **View results** on your GitHub Pages research blog
 
 The action will:
 - ✅ Start processing automatically
 - 📝 Comment on the issue with progress
-- 💾 Commit results to `docs/` and `html/` folders
-- 🔗 Provide links to generated files
+- 🌐 Publish to GitHub Pages blog
+- 🔗 Provide direct link to the published research
 - ✔️ Close the issue with `research-complete` label
 
 **[View detailed guide →](docs/HOW_TO_REQUEST_RESEARCH.md)**
@@ -82,7 +88,7 @@ The action will:
 | Standard Research | 4 | Medium | Balanced research |
 | Deep Dive | 6 | High | Comprehensive analysis |
 
-## GitHub Actions Setup
+## GitHub Setup
 
 ### 1. Add OpenAI API Key Secret
 
@@ -91,11 +97,20 @@ The action will:
 3. Name: `OPENAI_API_KEY`
 4. Value: Your OpenAI API key
 
-### 2. Labels (Auto-created by Template)
+### 2. Enable GitHub Pages
+
+1. Go to repository **Settings** → **Pages**
+2. Under **Build and deployment**:
+   - Source: **GitHub Actions**
+3. The site will deploy automatically when research is published
+
+Your research blog will be available at: `https://<username>.github.io/<repo-name>/`
+
+### 3. Labels (Auto-created by Template)
 
 The issue template automatically applies the `research` label. The workflow will also create a `research-complete` label when issues are finished.
 
-### 3. Submit Research Requests
+### 4. Submit Research Requests
 
 **Using Issue Template (Recommended):**
 - [Create a new research request](../../issues/new/choose)

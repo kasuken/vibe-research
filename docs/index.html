@@ -1,0 +1,55 @@
+﻿---
+layout: default
+title: Home
+---
+
+<div class="container">
+  <section class="hero">
+    <h1>Vibe Research</h1>
+    <p>AI-powered deep research on any topic. Explore comprehensive analyses generated using advanced reasoning models.</p>
+  </section>
+
+  {% assign researches = site.researches | sort: 'date' | reverse %}
+  
+  {% if researches.size > 0 %}
+  <section>
+    <ul class="research-list">
+      {% for research in researches %}
+      <li class="research-item">
+        <h2 class="research-title">
+          <a href="{{ research.url | relative_url }}">{{ research.title }}</a>
+        </h2>
+        <div class="research-meta">
+          <span>📅 {{ research.date | date: "%B %d, %Y" }}</span>
+          {% if research.depth %}
+          <span>🔬 {{ research.depth }}</span>
+          {% endif %}
+          {% if research.reading_time %}
+          <span>⏱️ {{ research.reading_time }} min read</span>
+          {% endif %}
+        </div>
+        <p class="research-excerpt">
+          {% if research.excerpt %}
+            {{ research.excerpt | strip_html | truncatewords: 50 }}
+          {% else %}
+            {{ research.content | strip_html | truncatewords: 50 }}
+          {% endif %}
+        </p>
+        <a href="{{ research.url | relative_url }}" class="read-more">Read more →</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% else %}
+  <section class="empty-state">
+    <h2>No research yet</h2>
+    <p>Create your first research by opening an issue with the <strong>research</strong> label.</p>
+    <p style="margin-top: 1rem;">
+      <a href="https://github.com/{{ site.github.repository_nwo | default: 'your-org/VibeResearch' }}/issues/new/choose" class="read-more">
+        Create Research Request →
+      </a>
+    </p>
+  </section>
+  {% endif %}
+</div>
+

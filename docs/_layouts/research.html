@@ -1,0 +1,36 @@
+﻿---
+layout: default
+---
+<div class="scroll-progress"></div>
+
+<article class="container">
+  <a href="{{ '/' | relative_url }}" class="back-link">
+    ← Back to all research
+  </a>
+  
+  <header class="research-header">
+    <h1>{{ page.title }}</h1>
+    <div class="research-meta">
+      {% if page.date %}
+      <span>
+        📅 {{ page.date | date: "%B %d, %Y" }}
+      </span>
+      {% endif %}
+      {% if page.depth %}
+      <span>
+        🔬 {{ page.depth }}
+      </span>
+      {% endif %}
+      {% if page.reading_time %}
+      <span>
+        ⏱️ {{ page.reading_time }} min read
+      </span>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="research-content">
+    {{ content }}
+  </div>
+</article>
+
