@@ -14,20 +14,26 @@ Deep Research CLI powered by OpenAI Reasoning. Conducts iterative research on an
 
 ## Quick Start
 
-### Option 1: GitHub Issue (Easiest)
+### Option 1: GitHub Issue Template (Easiest) ⭐
 
-1. **Create a new Issue** with the `research` label
-2. **Title** = Your research topic (e.g., "Quantum Computing Applications")
-3. **Body** (optional) = Include "Deep Dive" or "Quick Overview" to set depth
-4. **Wait** for the action to complete
-5. **Check the comments** for links to the generated files
+The easiest way to request research is using our issue template:
+
+1. **[Create a Research Request Issue](../../issues/new/choose)**
+2. Fill out the simple form:
+   - **Research Topic**: What you want researched
+   - **Research Depth**: Quick Overview, Standard Research, or Deep Dive
+   - **Context** (optional): Additional guidance
+3. **Submit** and wait for the automated research to complete
+4. **Get results** via comments with links to markdown and HTML reports
 
 The action will:
-- Start processing automatically
-- Comment on the issue with progress
-- Commit results to `docs/` and `html/` folders
-- Add a final comment with links to the files
-- Close the issue with `research-complete` label
+- ✅ Start processing automatically
+- 📝 Comment on the issue with progress
+- 💾 Commit results to `docs/` and `html/` folders
+- 🔗 Provide links to generated files
+- ✔️ Close the issue with `research-complete` label
+
+**[View detailed guide →](docs/HOW_TO_REQUEST_RESEARCH.md)**
 
 ### Option 2: Workflow Dispatch (Manual)
 
@@ -85,11 +91,19 @@ The action will:
 3. Name: `OPENAI_API_KEY`
 4. Value: Your OpenAI API key
 
-### 2. Create the `research` Label
+### 2. Labels (Auto-created by Template)
 
-1. Go to **Issues** → **Labels**
-2. Create a new label named `research`
-3. (Optional) Create `research-complete` label for completed issues
+The issue template automatically applies the `research` label. The workflow will also create a `research-complete` label when issues are finished.
+
+### 3. Submit Research Requests
+
+**Using Issue Template (Recommended):**
+- [Create a new research request](../../issues/new/choose)
+- Select "🔬 Research Request"
+- Fill out the form and submit
+
+**Using Manual Workflow:**
+- Go to **Actions** → **Vibe Research** → **Run workflow**
 
 ### Environment Variables (CI Mode)
 

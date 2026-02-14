@@ -53,17 +53,31 @@ jobs:
       - name: Set research parameters from issue
         if: github.event_name == 'issues'
         run: |
-          echo "VIBE_TOPIC=${{ github.event.issue.title }}" >> $GITHUB_ENV
-          # Extract depth from issue body if specified, otherwise default to Standard Research
+          # Extract topic from issue title (remove [Research] prefix if present)
+          TOPIC="${{ github.event.issue.title }}"
+          TOPIC="${TOPIC#\[Research\] }"
+          echo "VIBE_TOPIC=$TOPIC" >> $GITHUB_ENV
+          
+          # Extract depth from issue body
           BODY="${{ github.event.issue.body }}"
-          if echo "$BODY" | grep -qi "deep dive"; then
+          
+          # Try to extract from the form field "Research Depth"
+          if echo "$BODY" | grep -q "Deep Dive"; then
             echo "VIBE_DEPTH=Deep Dive" >> $GITHUB_ENV
-          elif echo "$BODY" | grep -qi "quick overview"; then
+          elif echo "$BODY" | grep -q "Quick Overview"; then
             echo "VIBE_DEPTH=Quick Overview" >> $GITHUB_ENV
+          elif echo "$BODY" | grep -q "Standard Research"; then
+            echo "VIBE_DEPTH=Standard Research" >> $GITHUB_ENV
           else
+            # Default to Standard Research
             echo "VIBE_DEPTH=Standard Research" >> $GITHUB_ENV
           fi
+          
           echo "ISSUE_NUMBER=${{ github.event.issue.number }}" >> $GITHUB_ENV
+          
+          # Log for debugging
+          echo "Research Topic: $TOPIC"
+          echo "Research Depth: $(echo $BODY | grep -o -E '(Quick Overview|Standard Research|Deep Dive)' | head -1 || echo 'Standard Research')"
 
       - name: Set research parameters from workflow dispatch
         if: github.event_name == 'workflow_dispatch'
@@ -77,11 +91,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const topic = process.env.VIBE_TOPIC || '${{ github.event.issue.title }}';
+            const depth = process.env.VIBE_DEPTH || 'Standard Research';
+            
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: '🔬 **Vibe Research** is processing your request...\n\n- **Topic:** ${{ github.event.issue.title }}\n- **Depth:** ' + process.env.VIBE_DEPTH + '\n\nThis may take a few minutes.'
+              body: `🔬 **Vibe Research** is processing your request...\n\n- **Topic:** ${topic}\n- **Depth:** ${depth}\n\nThis may take a few minutes. Results will be committed to the repository when complete.`
             })
 
       - name: Run Vibe Research

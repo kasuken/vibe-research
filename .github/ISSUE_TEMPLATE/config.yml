@@ -1,0 +1,9 @@
+﻿blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/your-org/VibeResearch/blob/main/README.md
+    about: Read the documentation for more information
+  - name: 💬 Discussions
+    url: https://github.com/your-org/VibeResearch/discussions
+    about: Ask questions and discuss research topics with the community
+

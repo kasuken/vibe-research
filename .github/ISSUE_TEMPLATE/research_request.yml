@@ -1,0 +1,75 @@
+﻿name: 🔬 Research Request
+description: Request AI-powered deep research on a topic
+title: "[Research] "
+labels: ["research"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Vibe Research Request
+        
+        Thank you for submitting a research request! This will trigger an automated deep research process using AI.
+        
+        **What happens next:**
+        1. AI will conduct iterative research on your topic
+        2. Results will be committed to the repository
+        3. You'll receive links to markdown and HTML reports
+        4. The issue will be automatically closed when complete
+        
+  - type: input
+    id: topic
+    attributes:
+      label: Research Topic
+      description: What topic would you like to research? (This will be used as the issue title)
+      placeholder: "e.g., Quantum Computing in Drug Discovery"
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: depth
+    attributes:
+      label: Research Depth
+      description: How comprehensive should the research be?
+      options:
+        - Standard Research (4 iterations - recommended)
+        - Quick Overview (2 iterations - fast)
+        - Deep Dive (6 iterations - comprehensive)
+      default: 0
+    validations:
+      required: true
+      
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context (Optional)
+      description: Provide any additional context, specific areas of focus, or questions you want answered
+      placeholder: |
+        - Focus on recent developments (2024-2026)
+        - Include practical applications
+        - Compare different approaches
+    validations:
+      required: false
+      
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Specific Requirements (Optional)
+      description: Any specific requirements for the research output?
+      placeholder: |
+        - Include citations and references
+        - Focus on technical details
+        - Provide code examples if applicable
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Acknowledgment
+      description: By submitting this issue, you acknowledge that
+      options:
+        - label: I understand this will use OpenAI API credits
+          required: true
+        - label: The research will be publicly visible in this repository
+          required: true
+
